@@ -17,7 +17,7 @@ dp = Dispatcher(bot)
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     """
-    This handler will be called when user sends `/start` command
+    Вызываеем хендлер для обработки команды start и приветствуем бота
     """
     await message.reply("Привет! Я - бот планировщик задач, могу тебе напоминать о выполнении какой-то задачи",
                         reply_markup=kb.add_kb)
@@ -26,17 +26,33 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(commands=['help'])
 async def help_command(message: types.Message):
     """
-    This handler will be called when user sends `/help` command
+    Вызываеем хендлер для обработки команды help и выводим список функционала бота
     """
     await message.reply("Тут будет инструкция")
+
+
+@dp.message_handler(lambda message: message.text == "Добавить напоминание")
+async def help_command(message: types.Message):
+    """
+    Вызываем хендлер для обработки сообщения по добавлению напоминания
+    """
+    await message.reply("Добавляем дату")
+
+
+@dp.message_handler(lambda message: message.text == "Посмотреть расписание")
+async def help_command(message: types.Message):
+    """
+    Вызываем хендлер для обработки сообщения по выводу расписания на сегодня
+    """
+    await message.reply("Выводим расписание")
 
 
 @dp.message_handler()
 async def help_command(message: types.Message):
     """
-    This handler will be called when user sends `/help` command
+    Вызываем хендлер для обработки несуществующих команд
     """
-    await message.reply("Тут будет инструкция")
+    await message.reply("Не знаю что ответить :(")
 
 
 if __name__ == '__main__':
