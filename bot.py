@@ -1,17 +1,29 @@
 import logging
 
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram import Bot, Dispatcher, executor, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 import keyboards as kb
+import config
+from access import AccessMiddleware
 
-API_TOKEN = '1791488192:AAH_DNEzMxsErxo0eo35yXYOYGoM67R93ro'
+# Берем данные пользователя и бота из config.py
+API_TOKEN = config.TOKEN
+ACCESS_ID = config.ID
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 
-# Initialize bot and dispatcher
+# Инициализируем бота и диспетчер
 bot = Bot(token=API_TOKEN, parse_mode=types.ParseMode.HTML)
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
+dp.middleware.setup(AccessMiddleware(ACCESS_ID))
+
+# Машина состояний
+class States(StatesGroup):
+    data = State()
 
 
 @dp.message_handler(commands=['start'])
@@ -31,16 +43,27 @@ async def help_command(message: types.Message):
     await message.reply("Тут будет инструкция")
 
 
+@dp.message_handler(state=States.data)
+async def help_command(message: types.Message, state: FSMContext):
+    """
+    Вызываем хендлер для обработки статуса принятия названия и даты напоминания
+    """
+    await state.update_data(date=message.text.lower())
+    await state.finish()
+    await message.reply("Ваше напоминание принято")
+
+
 @dp.message_handler(lambda message: message.text == "Добавить напоминание")
-async def help_command(message: types.Message):
+async def add_command(message: types.Message):
     """
     Вызываем хендлер для обработки сообщения по добавлению напоминания
     """
-    await message.reply("Добавляем дату")
+    await States.data.set()
+    await message.reply("Введите название и дату")
 
 
 @dp.message_handler(lambda message: message.text == "Посмотреть расписание")
-async def help_command(message: types.Message):
+async def plan_command(message: types.Message):
     """
     Вызываем хендлер для обработки сообщения по выводу расписания на сегодня
     """
@@ -48,7 +71,7 @@ async def help_command(message: types.Message):
 
 
 @dp.message_handler()
-async def help_command(message: types.Message):
+async def other_command(message: types.Message):
     """
     Вызываем хендлер для обработки несуществующих команд
     """
